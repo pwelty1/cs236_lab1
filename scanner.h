@@ -9,7 +9,7 @@
 #include <fstream>
 #include <locale> 
 
-#include "Token.h"
+#include "token.h"
 
 using namespace std;
 
@@ -97,7 +97,7 @@ void Scanner::tokenize(string temp1,int lineNum, string safetyTemp = "") {
             type = QUERIES;
             newToken.token(type,lineNum);
             }
-        else if (isdigit(temp7)|| isalpha(temp7)) {
+        else if (isalpha(temp7)) {
             type = ID;
             newToken.token(type,lineNum, safetyTemp);
             }
@@ -129,57 +129,81 @@ void Scanner::readFile(){
 
     ifstream in;
     in.open(filename);
-    int count = 0;
-    cout<< lineCtr << " 0"<<  endl;
+    //int count = 0;
+    //cout<< lineCtr << " 0"<<  endl;
     char c1;
-    while (in.get(c1)) { // end of file token always pops out after this loop.
-
+    while (in.peek() != EOF) { // end of file token always pops out after this loop.
+        //cout << "Hey we are right here" << endl;
+        in.get(c1);
         if (c1 == '\n') {
             ++lineCtr;
             //cout<< lineCtr << " 1"<<  endl;
             continue;
         }
-        else if (c1 == (' ')| c1 == ('\t')) { 
+        else if (c1 == (' ')|| c1 == ('\t')) { 
             //cout << "space" << endl;
             continue;
         }
         else if (c1 =='\''){  // State Machine for STRING token
-            
+            int count2 = 0;
             //cout<< c1 << endl;
             string temp2;
             temp2 += c1;
-            in.get(c1);
+            //cout << c1 <<"Is there a space?" << "0"<< endl;
             //cout << "Warning flag1" << endl;
-            while (c1 != '\'' && c1 != EOF){
-                //cout << "bad shit"<< endl;
-                temp2 += c1;
-                in.get(c1);
-                if (c1  == '\n') {
-                    ++count;
+            while (in.get(c1)){
+                //cout << c1 <<"Is there a space?" << endl;
+                if ((c1 == '\'') && (in.peek() == '\'')) {
+                    //cout << c1 <<"Is there a space?" << "0"<< endl;
                     temp2 += c1;
                     in.get(c1);
+                    //cout << c1 <<"Is there a space?" << "0"<< endl; 
+                    temp2+= c1;
+                    //if ()
                     continue;
                 }
-
+                else if ( c1 == '\'' && in.peek()!= '\''){
+                     //cout << c1 <<"Is there a space?" << "1"<< endl; 
+                    break;
+                }
+                else if (c1  == '\n') {
+                    temp2 += c1;
+                    ++count2;
+                     //cout << c1 <<"Is there a space?" << "2"<< endl; 
+                    continue;
+                }
+                //else if (c1 ==' ' | c1 =='\t'){
+                    //temp2 += c1;
+                     //cout << c1 <<"Is there a space?" << "3"<< endl; 
+                //}
+                else{
+                    //if (isspace(c1)){
+                       //temp2 += ' ';
+                       //continue;
+                    //}
+                    temp2 += c1;
+                    //cout << c1 <<"Is there a space?" << "4 "<< endl; 
+                }
             }
-            if (c1 == EOF){
-                lineCtr += count;
+            //cout << temp2 << endl;
+            if (in.eof()){
                 //cout<< lineCtr << "2" << endl;
-                tokenize(temp2, lineCtr);
+                tokenize(temp2, lineCtr, temp2);
+                lineCtr += count2;
                 break;
             }
-            
-            temp2+= c1;
+            temp2 += c1;
             string temp8;
             temp8 += c1;
             tokenize(temp8,lineCtr, temp2);
-            lineCtr += count;
+            lineCtr += count2;
             //cout<< lineCtr << "3" << endl;
 
             continue;
         
         }
-        else if (isalpha(c1)){   //state machine for ID tokens 
+        else if (isalpha(c1)) {   //state machine for ID tokens 
+            //cout << c1 << endl;
             string temp3;
             if (c1 =='F') {       //state machine for FACTS
                 
@@ -200,9 +224,11 @@ void Scanner::readFile(){
                             if (c1 =='s') {
                                 
                                 temp3 += c1;
-                                tokenize(temp3, lineCtr);
-                                //cout<< "terminated";
-                                continue;
+                               if(!(isalnum(in.peek()))){
+                                            tokenize(temp3, lineCtr);
+                                            continue;
+                                        }
+                                        in.get(c1);
                             }
                         }
                     }
@@ -235,8 +261,12 @@ void Scanner::readFile(){
                                     if (c1 =='s') {
                                         
                                         temp3 += c1;
-                                        tokenize(temp3, lineCtr);
-                                        continue;
+                                        if(!(isalnum(in.peek()))){
+                                            tokenize(temp3, lineCtr);
+                                            continue;
+                                        
+                                        }
+                                        in.get(c1);
                                     }
                                 }
                             }
@@ -262,8 +292,11 @@ void Scanner::readFile(){
                             if (c1 =='s') {
                                 
                                 temp3 += c1;
-                                tokenize(temp3, lineCtr);
-                                continue;
+                                if(!(isalnum(in.peek()))){
+                                            tokenize(temp3, lineCtr);
+                                            continue;
+                                        }
+                                in.get(c1);
                             }
                         }
                     }
@@ -296,8 +329,14 @@ void Scanner::readFile(){
                                     if (c1 =='s') {
                                         
                                         temp3 += c1;
-                                        tokenize(temp3, lineCtr);
-                                        continue;
+                                        //if (in.peek(=='s')){
+                                            //;
+                                        //}
+                                        if(!(isalnum(in.peek()))){
+                                            tokenize(temp3, lineCtr);
+                                            continue;
+                                        }
+                                        in.get(c1);
                                     }
                                 }
                             }
@@ -305,78 +344,86 @@ void Scanner::readFile(){
                     }
                 }
             }
-            do {
+            //in.get(c1);
+            //cout << temp3 << endl;
+            while(isalnum(c1)){
                 temp3 += c1;
                 in.get(c1);
+                if(!(isalnum(c1))){
+                    break;
+                }
             }
-            while(isalnum(c1 ));
+            //cout << temp3 << "done" << endl;
             string c2;
             if (!(isalnum(c1))){
-                c2 = "1";
+                c2 = "a";
             }
             in.putback(c1);
             tokenize(c2,lineCtr, temp3);
             continue; 
         }
-        else if (c1  == '#'){ //state machine for COMMENT 
+        else if (c1 == '#'){ //state machine for COMMENT 
             
             string temp4;
             temp4 += c1;
             int count1 = 0;
-
+            //cout << temp4 << endl;
+            in.get(c1);
             if (c1 == '|') { //multiline
-                
                 temp4 += c1;
-                while(c1 != EOF){
+                while(in.get(c1)){
                     if(c1 =='\n'){
-                         
                         temp4 += c1;
                         ++count1;
+                        continue;
                     }
-                        
-                    else if (c1  == '|'){
-                        
+                    else if (c1  == '|' && in.peek()== '#'){
                         temp4 += c1;
-                        if(c1 =='#'){
-                            
-                            temp4 += c1;
-                            string c3;
-                            tokenize(c3,lineCtr,temp4);
-                            break;
-                        }
-                        
+                        in.get(c1);
+                        temp4 += c1;
+                        string c3;
+                        c3 = c1;
+                        tokenize(c3,lineCtr,temp4);
+                        break;
+                    }
+                    else {
+                        temp4 += c1;
                     }
                 }
-                if(c1 == EOF) {
-                    lineCtr += count1;
+                if(in.eof()) {
                     //cout<< lineCtr << "3" << endl;
-                    tokenize(temp4, lineCtr);
-                    break;
-                }
-                lineCtr += count1;
-                //cout<< lineCtr << "1" << endl;
-
-            while (c1  != '\n') { //single-line
-                
-                temp4 += c1;
-            }
-            ++lineCtr;
-            if(c1 == EOF) {
+                    tokenize(temp4, lineCtr, temp4);
                     lineCtr += count1;
-                    //cout<< lineCtr << "1" << endl;
-                    tokenize(temp4, lineCtr);
                     break;
                 }
-            else{
-                
+            lineCtr += count1;
+            }
+             //cout<< lineCtr << "1" << endl;
+            //cout << temp4 << endl;
+            else {
+                while (c1  != '\n') { //single-line
+                temp4 += c1;
+                in.get(c1);
+                }
+                //cout<< temp4<< endl;
+                if(in.eof()) {
+                    //cout<< lineCtr << "1" << endl;
+                    string temp10 = "\n";
+                    tokenize(temp10, lineCtr,temp4);
+                   //++lineCtr;
+                    break;
+                }
+                else{
                 string c4;
                 c4 += c1;
                 tokenize(c4, lineCtr, temp4);
-            }
+                ++lineCtr;
+                }
                 
             }
+            
         }
-        else if (c1 == (',')| c1 == ('.')|c1 == ('?')| c1 == ('(')|c1 == (')')|c1 == (':')|c1 == ('*')|c1 == ('+') ){ // state machine for all 1 digit chars chars
+        else if (c1 == (',')|| c1 == ('.')|| c1 == ('?')|| c1 == ('(')|| c1 == (')')|| c1 == (':')|| c1 == ('*')||c1 == ('+') ){ // state machine for all 1 digit chars chars
             string temp5;
             temp5+= c1;
             if (in.peek() == '-'&& c1 == ':'){ // specific state machine for COLON_DASH
@@ -391,9 +438,16 @@ void Scanner::readFile(){
                 continue;
             } 
         }
+        else {// State machine for undefined
+            string temp9;
+            temp9 += c1;
+            
+            //cout << temp9 << endl;
+            tokenize(temp9 ,lineCtr,temp9);
 
-    }
-    lineCtr += 2;
+        }
+
+    } // eof
     string temp6 = "";
     tokenize(temp6, lineCtr);
         
